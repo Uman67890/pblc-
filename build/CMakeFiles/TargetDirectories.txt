@@ -1,3 +1,0 @@
-/home/harsh-maurya/Desktop/OOPS-PBL/build/CMakeFiles/JeevanSetu.dir
-/home/harsh-maurya/Desktop/OOPS-PBL/build/CMakeFiles/edit_cache.dir
-/home/harsh-maurya/Desktop/OOPS-PBL/build/CMakeFiles/rebuild_cache.dir

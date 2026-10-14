@@ -1,0 +1,26 @@
+
+# Build output and generated files
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Compiled files
+*.o
+*.obj
+*.a
+*.so
+*.exe
+
+# IDE and OS files
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+!.env.example
