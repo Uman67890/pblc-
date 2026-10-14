@@ -1,0 +1,20 @@
+{
+  "name": "jeevansetu-emergency-system",
+  "version": "1.0.0",
+  "description": "JeevanSetu – Smart Emergency Medical Coordination System with C++ Engine and Modern Responsive Web Interface",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "emergency-medical",
+    "cpp-backend",
+    "jeevansetu",
+    "hospital-recommendation",
+    "ambulance-dispatch",
+    "icu-beds"
+  ],
+  "author": "JeevanSetu Team",
+  "license": "MIT"
+}

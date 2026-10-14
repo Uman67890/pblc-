@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JeevanSetu – Smart Emergency Medical Coordination System</title>
+  <meta name="description" content="JeevanSetu is an AI-driven smart emergency medical bridge system that automates hospital bed reservations, nearest ambulance dispatch, blood bank availability, and patient coordination during the golden hour.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Leaflet Interactive Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar" id="main-nav">
+    <div class="nav-container">
+      <div class="brand" id="brand-logo" onclick="switchTab('hospitals')">
+        <div class="logo-box">
+          <svg class="pulse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28" stroke="#ffffff" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">JeevanSetu</span>
+          <span class="brand-subtitle">EMERGENCY MEDICAL BRIDGE</span>
+        </div>
+      </div>
+
+      <div class="nav-center-actions">
+        <!-- SOS Trigger Button from Image 2 -->
+        <button class="sos-dispatch-btn" id="sos-dispatch-trigger" onclick="openSosModal()">
+          <span class="sos-alert-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10h2v4h-2zm0 6h2v2h-2z"/>
+            </svg>
+          </span>
+          <span class="sos-btn-text">
+            <strong>SOS</strong>
+            <small>Dispatch</small>
+          </span>
+          <span class="sos-pulse-ring"></span>
+        </button>
+
+        <!-- Navigation Tabs from Image 2 -->
+        <nav class="nav-links" id="nav-tabs">
+          <button class="nav-item" data-tab="hospitals" onclick="switchTab('hospitals')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h6M12 6v6"/>
+            </svg>
+            <span>Hospitals</span>
+          </button>
+
+          <button class="nav-item active" data-tab="livemap" onclick="switchTab('livemap')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+              <line x1="8" y1="2" x2="8" y2="18"/>
+              <line x1="16" y1="6" x2="16" y2="22"/>
+            </svg>
+            <span>Live Map</span>
+            <span class="badge-count" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">LIVE</span>
+          </button>
+
+          <button class="nav-item" data-tab="ambulances" onclick="switchTab('ambulances')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 17h4V5H2v12h3M14 5h4l3 5v7h-3"/>
+              <circle cx="7.5" cy="17.5" r="2.5"/>
+              <circle cx="17.5" cy="17.5" r="2.5"/>
+              <path d="M7 8h4M9 6v4"/>
+            </svg>
+            <span>Ambulances</span>
+            <span class="badge-count" id="active-ambulance-count">6 Active</span>
+          </button>
+
+          <button class="nav-item" data-tab="beds" onclick="switchTab('beds')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/>
+              <circle cx="6" cy="6" r="2"/>
+            </svg>
+            <span>ICU Beds</span>
+          </button>
+
+          <button class="nav-item" data-tab="blood" onclick="switchTab('blood')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+            <span>Blood Bank</span>
+          </button>
+
+          <button class="nav-item" data-tab="admin" onclick="switchTab('admin')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3v18h18M18 9l-5 5-4-4-3 3"/>
+            </svg>
+            <span>Admin</span>
+          </button>
+
+          <button class="nav-item" data-tab="lora" onclick="switchTab('lora')">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12h20M7 5a10 10 0 0 1 10 0M5 19a10 10 0 0 0 14 0"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+            <span>LoRa Mode</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="nav-right-status">
+        <div class="system-status-indicator" title="Connected to C++ Recommendation Engine">
+          <span class="status-dot green-pulse"></span>
+          <span class="status-text">C++ Engine Live</span>
+        </div>
+        <button class="btn-location" onclick="refreshUserLocation()" title="Detect GPS location">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          </svg>
+          <span id="current-location-text">Delhi NCR (28.567°N)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Emergency Ticker / Notification Bar -->
+  <section class="alert-ticker">
+    <div class="ticker-content">
+      <span class="ticker-tag">GOLDEN HOUR CRITICAL PROTOCOL</span>
+      <span class="ticker-text">Smart Emergency Routing Active: Bed reservations locked in real-time. Direct ER Telemetry synchronizing with Trauma Centers across Delhi NCR.</span>
+      <div style="display: flex; gap: 1rem; margin-left: auto;">
+        <span class="ticker-action" style="color: #38bdf8;" onclick="switchTab('livemap')">🗺️ Open Live Map</span>
+        <span class="ticker-action" style="color: #f87171;" onclick="openSosModal()">⚡ Instant SOS &rarr;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Container -->
+  <main class="main-content">
+    
+    <!-- ==================== VIEW 1: HOSPITALS (MATCHING IMAGE 2) ==================== -->
+    <section id="view-hospitals" class="tab-view">
+      <div class="view-header">
+        <div class="header-titles">
+          <h1>Nearby Verified Emergency Hospitals</h1>
+          <p>Real-time telemetry showing live ICU, Oxygen, and General beds with instant ER dispatch.</p>
+        </div>
+        
+        <div class="filter-controls">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input type="text" id="hospital-search" placeholder="Search hospital name, specialty, or area..." oninput="filterHospitals()">
+          </div>
+          <div class="filter-pills">
+            <button class="filter-btn active" data-filter="all" onclick="applyHospitalFilter('all')">All Hospitals</button>
+            <button class="filter-btn" data-filter="trauma" onclick="applyHospitalFilter('trauma')">Level-1 Trauma</button>
+            <button class="filter-btn" data-filter="cardiac" onclick="applyHospitalFilter('cardiac')">Cardiac ER</button>
+            <button class="filter-btn" data-filter="burns" onclick="applyHospitalFilter('burns')">Burns Unit</button>
+            <button class="filter-btn" data-filter="available-icu" onclick="applyHospitalFilter('available-icu')">High ICU Availability</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hospital Cards Grid (Identical layout to Image 2) -->
+      <div class="hospitals-grid" id="hospitals-card-container">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+    </section>
+
+    <!-- ==================== VIEW: FULLSCREEN INTERACTIVE LIVE MAP ==================== -->
+    <section id="view-livemap" class="tab-view active-view">
+      <div class="view-header">
+        <div class="header-titles">
+          <h1>Live Emergency Telemetry & Hospital Radar Map</h1>
+          <p>Real-time interactive satellite & street map pinpointing your exact live GPS location, trauma centers, and ambulance fleet.</p>
+        </div>
+        <div class="map-controls-bar" style="display: flex; gap: 0.75rem;">
+          <button class="btn-primary-action" onclick="centerMapOnUser()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            Center on My Live Location
+          </button>
+          <button class="btn-secondary" onclick="fetchLiveLocation()">
+            📡 Re-scan Device GPS
+          </button>
+        </div>
+      </div>
+
+      <div class="live-map-wrapper">
+        <!-- Floating Google Maps Search & Layer Bar -->
+        <div class="gmap-floating-top">
+          <div class="gmap-search-bar">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5f6368" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input type="text" id="gmap-search-input" placeholder="Search Google Maps for hospitals, trauma centers..." oninput="filterMapMarkers(this.value)">
+            <button class="gmap-directions-btn" onclick="openDirectionsToNearest()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="#1a73e8">
+                <path d="M21.71 11.29l-9-9a.996.996 0 0 0-1.41 0l-9 9a.996.996 0 0 0 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 0 0 0-1.41zm-10.71 6.3l-6.3-6.3 6.3-6.3 6.3 6.3-6.3 6.3z"/>
+                <path d="M13 13.5V11h-2v3h-1.5v-3.5c0-.83.67-1.5 1.5-1.5h2V7l3.5 3.5L13 13.5z"/>
+              </svg>
+              <span>Directions</span>
+            </button>
+          </div>
+
+          <!-- Google Maps Layer Switcher: Default Map | Satellite | Terrain | Traffic -->
+          <div class="gmap-layer-selector">
+            <button class="gmap-layer-btn active" id="btn-layer-streets" onclick="setMapLayer('streets')">
+              <span>Map</span>
+            </button>
+            <button class="gmap-layer-btn" id="btn-layer-satellite" onclick="setMapLayer('satellite')">
+              <span>Satellite</span>
+            </button>
+            <button class="gmap-layer-btn" id="btn-layer-terrain" onclick="setMapLayer('terrain')">
+              <span>Terrain</span>
+            </button>
+            <button class="gmap-layer-btn" id="btn-layer-traffic" onclick="toggleTrafficLayer()">
+              <span class="traffic-dot"></span>
+              <span>Traffic</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Google Maps Target / Location FAB -->
+        <button class="gmap-locate-fab" onclick="centerMapOnUser()" title="Center on your location">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#1a73e8">
+            <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+          </svg>
+        </button>
+
+        <div id="full-live-map" class="interactive-map-canvas" style="width: 100%; height: 600px; border-radius: 14px; border: 1.5px solid #23375e; overflow: hidden; position: relative;"></div>
+
+        <!-- Google Watermark badge -->
+        <div class="gmap-watermark">
+          <span class="g-blue">G</span><span class="g-red">o</span><span class="g-yellow">o</span><span class="g-blue">g</span><span class="g-green">l</span><span class="g-red">e</span>
+          <span class="gmap-sub">Maps Engine</span>
+        </div>
+
+        <div class="map-overlay-hud">
+          <div class="hud-item">
+            <span class="hud-lbl">Your Live Coordinates:</span>
+            <strong class="hud-val highlight-cyan" id="hud-coords">Acquiring live GPS...</strong>
+          </div>
+          <div class="hud-item">
+            <span class="hud-lbl">Detected Address:</span>
+            <strong class="hud-val" id="hud-address">Resolving street...</strong>
+          </div>
+          <div class="hud-item">
+            <span class="hud-lbl">Optimal ER Recommendation:</span>
+            <strong class="hud-val text-green" id="hud-nearest-er">AIIMS Apex Trauma Center</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: AMBULANCES ==================== -->
+    <section id="view-ambulances" class="tab-view">
+      <div class="view-header">
+        <div class="header-titles">
+          <h1>GPS Emergency Ambulance Fleet</h1>
+          <p>Advanced Life Support (ALS) & Basic Life Support (BLS) units with real-time ETA tracking.</p>
+        </div>
+        <button class="btn-primary-action" onclick="requestAmbulanceQuick()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Request Nearest Ambulance
+        </button>
+      </div>
+
+      <div class="fleet-dashboard">
+        <div class="fleet-map-container">
+          <div id="fleet-live-map" style="width: 100%; height: 100%; min-height: 480px; border-radius: 10px; border: 1px solid #1a2744; overflow: hidden;"></div>
+        </div>
+
+        <div class="fleet-list-container">
+          <h3>Active Fleet Units</h3>
+          <div class="fleet-units-list" id="fleet-units-list">
+            <!-- Dynamic fleet cards -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: ICU BEDS ==================== -->
+    <section id="view-beds" class="tab-view">
+      <div class="view-header">
+        <div class="header-titles">
+          <h1>Live Emergency & ICU Bed Availability</h1>
+          <p>Preventing hospital refusal by reserving beds prior to ambulance arrival.</p>
+        </div>
+        <div class="stats-pills-row">
+          <div class="summary-stat-chip">
+            <span class="num text-green" id="total-icu-available">58</span>
+            <span class="lbl">ICU Beds Free</span>
+          </div>
+          <div class="summary-stat-chip">
+            <span class="num text-yellow" id="total-oxygen-available">164</span>
+            <span class="lbl">Oxygen Beds Free</span>
+          </div>
+          <div class="summary-stat-chip">
+            <span class="num text-blue" id="total-general-available">510</span>
+            <span class="lbl">General Beds Free</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="beds-table-card">
+        <table class="beds-table">
+          <thead>
+            <tr>
+              <th>Hospital Name</th>
+              <th>Distance</th>
+              <th>Trauma Category</th>
+              <th>ICU (Ventilator)</th>
+              <th>Oxygen Beds</th>
+              <th>Doctors on ER</th>
+              <th>Bed Reservation</th>
+            </tr>
+          </thead>
+          <tbody id="beds-table-body">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: BLOOD BANK ==================== -->
+    <section id="view-blood" class="tab-view">
+      <div class="view-header">
+        <div class="header-titles">
+          <h1>Emergency Blood Bank Stock & Availability</h1>
+          <p>Instant verification of blood units matching patient requirements during emergency trauma.</p>
+        </div>
+        <button class="btn-primary-action" onclick="openBloodRequestModal()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+          </svg>
+          Request Emergency Units
+        </button>
+      </div>
+
+      <div class="blood-group-grid" id="blood-groups-container">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="blood-hospitals-stock">
+        <h3>Hospital Wise Blood Inventory</h3>
+        <div class="stock-table-card">
+          <table class="beds-table" id="blood-stock-table">
+            <thead>
+              <tr>
+                <th>Hospital</th>
+                <th>Distance</th>
+                <th>O- (Universal Donor)</th>
+                <th>O+</th>
+                <th>A+</th>
+                <th>B+</th>
+                <th>AB+</th>
+                <th>Platelets (Apheresis)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="blood-stock-body">
+              <!-- Dynamic -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 5: ADMIN DASHBOARD ==================== -->
+    <section id="view-admin" class="tab-view">
+      <div class="view-header">
+        <div class="header-titles">
+          <h1>Hospital ER & Dispatch Admin Console</h1>
+          <p>Live incoming trauma cases, bed inventory manager, and on-call physician status.</p>
+        </div>
+        <div class="admin-top-actions">
+          <button class="btn-secondary" onclick="simulateIncomingEmergency()">+ Simulate Emergency SOS</button>
+          <button class="btn-secondary" onclick="resetDemoData()">Reset Data</button>
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card">
+          <div class="card-head">
+            <h3>Incoming Trauma Cases (Golden Hour Queue)</h3>
+            <span class="live-tag">LIVE FEED</span>
+          </div>
+          <div class="incoming-cases-list" id="incoming-cases-feed">
+            <!-- Dynamic cases -->
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="card-head">
+            <h3>Quick Bed Inventory Override</h3>
+            <span class="badge-pill">Hospital: AIIMS Trauma Center</span>
+          </div>
+          <div class="bed-adjuster-panel">
+            <div class="adjuster-item">
+              <span>ICU Ventilator Beds</span>
+              <div class="counter-box">
+                <button onclick="adjustBeds('aiims', 'icu', -1)">-</button>
+                <strong id="admin-aiims-icu">18</strong>
+                <button onclick="adjustBeds('aiims', 'icu', +1)">+</button>
+              </div>
+            </div>
+            <div class="adjuster-item">
+              <span>Oxygen Enriched Beds</span>
+              <div class="counter-box">
+                <button onclick="adjustBeds('aiims', 'oxygen', -1)">-</button>
+                <strong id="admin-aiims-oxy">45</strong>
+                <button onclick="adjustBeds('aiims', 'oxygen', +1)">+</button>
+              </div>
+            </div>
+            <div class="adjuster-item">
+              <span>Emergency Trauma Doctors On-Duty</span>
+              <div class="counter-box">
+                <button onclick="adjustDoctors('aiims', -1)">-</button>
+                <strong id="admin-aiims-docs">8</strong>
+                <button onclick="adjustDoctors('aiims', +1)">+</button>
+              </div>
+            </div>
+            <div class="adjuster-status">
+              <span class="text-muted">Changes propagate instantly to C++ dispatch algorithm.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C++ Algorithm Visualizer Card -->
+      <div class="cpp-algo-card">
+        <div class="card-head">
+          <div class="cpp-badge-tag">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            <span>C++ Smart Ranking Algorithm Inspector</span>
+          </div>
+          <span class="algo-formula">Score = (w1/Dist) + w2*(ICU) + w3*(Doctors) + w4*(BloodMatch)</span>
+        </div>
+        <p class="algo-description">
+          The core recommendation logic is written in modern C++ (located in <code>pbl/SmartRanker.hpp</code>). It continuously ranks all hospitals within a 15km perimeter to guarantee zero delay during critical trauma cases.
+        </p>
+        <div class="algo-rankings-table" id="algo-rankings-table">
+          <!-- Dynamic C++ Rank computation -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 6: LORA OFFLINE MODE ==================== -->
+    <section id="view-lora" class="tab-view">
+      <div class="view-header">
+        <div class="header-titles">
+          <h1>LoRa Low-Network Emergency Bridge</h1>
+          <p>As specified in the project architecture: ultra-low bandwidth emergency fallback for remote highways without 4G/5G cellular coverage.</p>
+        </div>
+        <div class="status-chip lora-active">
+          <span class="status-dot"></span>
+          <span>LoRa Sub-GHz 868MHz Simulator Active</span>
+        </div>
+      </div>
+
+      <div class="lora-grid">
+        <div class="lora-card">
+          <h3>Emergency Packet Generator (16-Byte Payload)</h3>
+          <p class="text-muted">Encodes GPS location, injury severity, blood group, and SOS timestamp into a compact binary frame.</p>
+          <div class="lora-form">
+            <div class="form-row">
+              <label>Latitude:</label>
+              <input type="text" id="lora-lat" value="28.5672" readonly>
+            </div>
+            <div class="form-row">
+              <label>Longitude:</label>
+              <input type="text" id="lora-lon" value="77.2100" readonly>
+            </div>
+            <div class="form-row">
+              <label>Injury Severity:</label>
+              <select id="lora-severity">
+                <option value="CRITICAL_TRAUMA">Critical Trauma (Level 1)</option>
+                <option value="CARDIAC">Cardiac Arrest</option>
+                <option value="SEVERE_BURNS">Severe Burns</option>
+                <option value="RESPIRATORY">Respiratory Failure</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Blood Group:</label>
+              <select id="lora-blood">
+                <option value="O_NEG">O Negative (Universal)</option>
+                <option value="O_POS">O Positive</option>
+                <option value="B_POS">B Positive</option>
+                <option value="A_POS">A Positive</option>
+              </select>
+            </div>
+            <button class="btn-primary-action full-width" onclick="generateAndTransmitLoRa()">
+              Broadcast LoRa SOS Frame
+            </button>
+          </div>
+        </div>
+
+        <div class="lora-card">
+          <h3>Packet Telemetry Hex Inspector</h3>
+          <div class="terminal-box" id="lora-terminal">
+            <div class="term-line text-cyan">// JeevanSetu LoRa Gateway Protocol v1.4</div>
+            <div class="term-line text-muted">// Listening on Frequency 868.100 MHz (SF7, BW 125kHz)...</div>
+            <div class="term-line text-green">[STANDBY] LoRa Gateway ready for packet transmission.</div>
+          </div>
+          <div class="lora-packet-breakdown">
+            <h4>Decoded 16-Byte Frame Structure:</h4>
+            <div class="hex-badges" id="hex-badges">
+              <span class="hex-chip">SYNC: 0x5345</span>
+              <span class="hex-chip">LAT: 0x01B3A0</span>
+              <span class="hex-chip">LON: 0x049C28</span>
+              <span class="hex-chip">SEV: 0x01</span>
+              <span class="hex-chip">BLD: 0x04</span>
+              <span class="hex-chip">CRC: 0xA9</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== SOS EMERGENCY MODAL & MULTI-STEP WORKFLOW ==================== -->
+  <div class="modal-backdrop" id="sos-modal-backdrop">
+    <div class="sos-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="sos-danger-badge">CRITICAL SOS DISPATCH</div>
+          <h2>Automated Emergency Medical Bridge</h2>
+        </div>
+        <button class="modal-close-btn" onclick="closeSosModal()">&times;</button>
+      </div>
+
+      <!-- Flow Stepper directly implementing Image 1 & Image 3 -->
+      <div class="stepper-progress">
+        <div class="step-node active" id="step-node-1">
+          <div class="step-circle">1</div>
+          <span class="step-lbl">Accident & SOS</span>
+        </div>
+        <div class="step-line" id="step-line-1"></div>
+        <div class="step-node" id="step-node-2">
+          <div class="step-circle">2</div>
+          <span class="step-lbl">GPS Detection</span>
+        </div>
+        <div class="step-line" id="step-line-2"></div>
+        <div class="step-node" id="step-node-3">
+          <div class="step-circle">3</div>
+          <span class="step-lbl">C++ Hospital Match</span>
+        </div>
+        <div class="step-line" id="step-line-3"></div>
+        <div class="step-node" id="step-node-4">
+          <div class="step-circle">4</div>
+          <span class="step-lbl">Ambulance & Bed</span>
+        </div>
+        <div class="step-line" id="step-line-4"></div>
+        <div class="step-node" id="step-node-5">
+          <div class="step-circle">5</div>
+          <span class="step-lbl">Family Alerts</span>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- STEP 1: INITIAL SOS TRIGGER & TRIAGE -->
+        <div class="sos-step-pane active" id="pane-step-1">
+          <div class="sos-trigger-banner">
+            <div class="sos-pulse-container">
+              <button class="big-sos-red-button" onclick="advanceToStep2()">
+                <div class="sos-inner-text">
+                  <span class="sos-word">SOS</span>
+                  <span class="sos-sub">TAP TO INITIATE</span>
+                </div>
+              </button>
+            </div>
+            <p class="sos-helper-text">
+              One tap automatically scans nearest hospitals, checks ICU bed availability, dispatches the closest ambulance, and notifies family.
+            </p>
+          </div>
+
+          <div class="triage-quick-select">
+            <h4>Select Emergency Type (Optional):</h4>
+            <div class="triage-pills">
+              <label class="triage-option selected">
+                <input type="radio" name="emergency_triage" value="trauma" checked>
+                <span>🚗 Road Accident / Severe Trauma</span>
+              </label>
+              <label class="triage-option">
+                <input type="radio" name="emergency_triage" value="cardiac">
+                <span>❤️ Cardiac Arrest / Chest Pain</span>
+              </label>
+              <label class="triage-option">
+                <input type="radio" name="emergency_triage" value="stroke">
+                <span>🧠 Stroke / Unconscious</span>
+              </label>
+              <label class="triage-option">
+                <input type="radio" name="emergency_triage" value="burns">
+                <span>🔥 Severe Burns / Blast</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="patient-quick-info">
+            <div class="input-grid">
+              <input type="text" id="patient-name-input" placeholder="Patient Name (Optional)" value="Rahul Verma">
+              <input type="tel" id="family-phone-input" placeholder="Emergency Family Phone" value="+91 98101 23456">
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: GPS LOCATION DETECTION (Image 3) -->
+        <div class="sos-step-pane" id="pane-step-2">
+          <div class="gps-scanning-state">
+            <div class="radar-spinner"></div>
+            <div class="live-gps-badge">
+              <span class="status-dot green-pulse"></span>
+              <span>LIVE SATELLITE GPS ACQUISITION</span>
+            </div>
+            <h3>Detecting Real-Time GPS Location...</h3>
+            <p class="text-muted">Fetching high-precision coordinates directly from your device sensor.</p>
+            
+            <div class="gps-coords-display">
+              <div class="coord-pill">
+                <span>LAT:</span>
+                <strong id="gps-lat-val">28.5672° N</strong>
+              </div>
+              <div class="coord-pill">
+                <span>LON:</span>
+                <strong id="gps-lon-val">77.2100° E</strong>
+              </div>
+              <div class="coord-pill">
+                <span>ACCURACY:</span>
+                <strong class="text-green" id="gps-accuracy-val">&plusmn; 4 meters</strong>
+              </div>
+            </div>
+            <div class="location-resolved-box">
+              <span class="pin-icon">📍</span>
+              <span id="detected-address">Near Outer Ring Road, Sukhdev Vihar, New Delhi</span>
+            </div>
+
+            <!-- Real-time Live Map embedded directly in SOS Step 2 -->
+            <div id="sos-step2-map" style="width: 100%; height: 210px; border-radius: 12px; margin: 0.85rem 0; border: 1.5px solid #23375e; overflow: hidden; position: relative; background: #070b14;"></div>
+
+            <div class="gps-actions-row" style="display: flex; gap: 0.75rem; margin-top: 0.25rem;">
+              <button class="btn-secondary" onclick="fetchLiveLocation()" style="font-size: 0.8rem; padding: 0.45rem 0.9rem;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Refresh Device GPS
+              </button>
+              <button class="btn-secondary" onclick="centerStep2Map()" style="font-size: 0.8rem; padding: 0.45rem 0.9rem;">
+                🎯 Center Map on Live Spot
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: AUTOMATIC HOSPITAL CHECKS & RANKING (Image 1 & 3) -->
+        <div class="sos-step-pane" id="pane-step-3">
+          <div class="matching-header">
+            <h3>C++ Smart Recommendation Engine Running Checks</h3>
+            <p class="text-muted">Multi-factor optimization: Distance, ICU Beds, Oxygen, Doctor Roster, Blood Match.</p>
+          </div>
+
+          <div class="checks-checklist">
+            <div class="check-item verified" id="chk-beds">
+              <span class="chk-icon">&#10004;</span>
+              <span class="chk-text">Emergency & ICU Beds Verified</span>
+              <span class="chk-status text-green">Available</span>
+            </div>
+            <div class="check-item verified" id="chk-docs">
+              <span class="chk-icon">&#10004;</span>
+              <span class="chk-text">Trauma Doctors & Specialists On-Call</span>
+              <span class="chk-status text-green">4 Surgeons Available</span>
+            </div>
+            <div class="check-item verified" id="chk-blood">
+              <span class="chk-icon">&#10004;</span>
+              <span class="chk-text">Compatible Blood Group Reserves Checked</span>
+              <span class="chk-status text-green">14 Units In Stock</span>
+            </div>
+            <div class="check-item verified" id="chk-amb">
+              <span class="chk-icon">&#10004;</span>
+              <span class="chk-text">Ambulance Availability in Perimeter</span>
+              <span class="chk-status text-green">3 Units within 4km</span>
+            </div>
+          </div>
+
+          <div class="best-hospital-card-match" id="recommended-hospital-banner">
+            <div class="match-badge">#1 SMART RECOMMENDATION</div>
+            <div class="match-content">
+              <h4 id="match-hospital-name">Sir Ganga Ram Hospital</h4>
+              <p id="match-hospital-details">3.4 km away • Level-1 Trauma • 9 ICU Beds Ready</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: AMBULANCE ASSIGNMENT & BED RESERVATION (Image 1 & 3) -->
+        <div class="sos-step-pane" id="pane-step-4">
+          <div class="dispatch-confirmed-box">
+            <div class="confirmed-badge">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>Emergency Bed Reserved & Ambulance Dispatched!</span>
+            </div>
+
+            <div class="reservation-ticket">
+              <div class="ticket-header">
+                <div>
+                  <small>DIGITAL EMERGENCY TOKEN</small>
+                  <h4>TOKEN #JS-EMG-2026-9041</h4>
+                </div>
+                <div class="bed-reserved-tag">
+                  <span>BED #ICU-04 LOCKED</span>
+                </div>
+              </div>
+              <div class="ticket-grid">
+                <div>
+                  <span class="lbl">Assigned Hospital:</span>
+                  <strong id="ticket-hosp">Sir Ganga Ram Hospital</strong>
+                </div>
+                <div>
+                  <span class="lbl">ER Direct Contact:</span>
+                  <strong class="highlight-cyan">+91 11 4225 1000</strong>
+                </div>
+                <div>
+                  <span class="lbl">Ambulance Unit:</span>
+                  <strong id="ticket-amb">ALS-4029 (Equipped with Ventilator)</strong>
+                </div>
+                <div>
+                  <span class="lbl">Estimated Arrival (ETA):</span>
+                  <strong class="text-green" id="ticket-eta">3.8 Minutes</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live ETA Countdown Simulation -->
+            <div class="eta-live-tracker">
+              <div class="eta-bar-fill" id="eta-progress-bar" style="width: 25%;"></div>
+              <div class="eta-info-row">
+                <span>Ambulance Driver: <strong>Satish Kumar (+91 98765 43210)</strong></span>
+                <span class="pulsing-text">En Route to your GPS Location</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 5: FAMILY NOTIFICATIONS & LIVE TRACKING (Image 1 & 3) -->
+        <div class="sos-step-pane" id="pane-step-5">
+          <div class="family-notification-summary">
+            <h3>Family & Relatives Live Updates Sent</h3>
+            <p class="text-muted">SMS and WhatsApp emergency alerts have been transmitted with real-time patient telemetry.</p>
+
+            <div class="sms-preview-card">
+              <div class="sms-top">
+                <span>💬 SMS / WhatsApp Live Alert</span>
+                <small>Just now</small>
+              </div>
+              <div class="sms-body" id="family-sms-text">
+                [JeevanSetu Emergency Alert]: Rahul Verma triggered emergency SOS. Nearest ALS Ambulance (DL-01-EA-4029) assigned (ETA 4 min). Emergency Bed #ICU-04 is reserved at Sir Ganga Ram Hospital (Old Rajinder Nagar). Track live: https://jeevansetu.gov.in/track/JS-9041
+              </div>
+            </div>
+
+            <div class="modal-final-actions">
+              <button class="btn-call-er" onclick="triggerErCall('+911142251000')">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/>
+                </svg>
+                Call Hospital ER Now
+              </button>
+              <button class="btn-secondary" onclick="closeSosModal()">View Live Dashboard</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" id="modal-footer-nav">
+        <button class="btn-secondary" id="modal-prev-btn" onclick="previousSosStep()" style="display: none;">Back</button>
+        <button class="btn-primary-action" id="modal-next-btn" onclick="nextSosStep()">Proceed to GPS Detection &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BED RESERVATION MODAL ==================== -->
+  <div class="modal-backdrop" id="bed-reserve-modal">
+    <div class="simple-modal-dialog">
+      <div class="modal-header">
+        <h3 id="reserve-modal-hospital-name">Reserve Emergency Bed</h3>
+        <button class="modal-close-btn" onclick="closeBedReserveModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted" id="reserve-modal-subtitle">Instant bed reservation locks the bed for 45 minutes to ensure immediate ER admission.</p>
+        <div class="form-group">
+          <label>Select Bed Category:</label>
+          <select id="reserve-bed-type" class="custom-select">
+            <option value="icu">ICU Bed with Ventilator</option>
+            <option value="oxygen">Oxygen Supported Emergency Bed</option>
+            <option value="general">General Acute Care Bed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Patient Full Name:</label>
+          <input type="text" id="reserve-patient-name" class="custom-input" placeholder="e.g. Ramesh Kumar">
+        </div>
+        <div class="form-group">
+          <label>Emergency Contact Number:</label>
+          <input type="tel" id="reserve-contact" class="custom-input" placeholder="+91 98765 00000">
+        </div>
+        <div class="form-group">
+          <label>Primary Condition:</label>
+          <input type="text" id="reserve-condition" class="custom-input" placeholder="e.g. Multiple fractures, respiratory distress">
+        </div>
+        <button class="btn-primary-action full-width" onclick="confirmBedReservation()">
+          Confirm & Lock Bed Reservation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
